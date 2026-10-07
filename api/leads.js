@@ -49,8 +49,6 @@ async function createShopifyDiscount({ shop, token, code, name }) {
           appliesOncePerCustomer: true,
           context: { all: 'ALL' },
           customerGets: {
-            appliesOnOneTimePurchase: true,
-            appliesOnSubscription: false,
             items: { all: true },
             value: { percentage: 0.05 },
           },
