@@ -269,7 +269,7 @@ export function MysteryBoxScene({
   };
 
   const handleCopyCode = () => {
-    const code = prize ? prize.code : FIRST_TIME_BUYER_PRIZE.code;
+    const code = discountCode;
     soundFx.playClick();
     fallbackCopy(code);
     setIsCopied(true);
@@ -288,10 +288,10 @@ export function MysteryBoxScene({
 
     soundFx.unlock();
     soundFx.playClick();
-    const code = prize ? prize.code : FIRST_TIME_BUYER_PRIZE.code;
+    const code = discountCode;
     fallbackCopy(code);
     setIsCopied(true);
-    const destinationUrl = 'https://ekaani.com/';
+    const destinationUrl = discountUrl;
     try {
       const win = window.open(destinationUrl, '_blank');
       if (!win || win.closed || typeof win.closed === 'undefined') {
@@ -583,7 +583,7 @@ export function MysteryBoxScene({
                     <Tag className="w-4 h-4 text-amber-400 shrink-0" />
                     <div className="text-left">
                       <span className="font-mono text-base font-black tracking-widest text-white block leading-none">
-                        {FIRST_TIME_BUYER_PRIZE.code}
+                        {discountCode}
                       </span>
                       <span className="text-[10px] text-amber-400 font-bold tracking-wide">
                         5% OFF + Free Packaging
@@ -749,7 +749,7 @@ export function MysteryBoxScene({
                 <ArrowRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
               </button>
               <span className="text-[10px] sm:text-[11px] text-white font-medium tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,1)] text-center">
-                {isCopied ? '✓ Code FIRST5 copied to clipboard!' : 'Code FIRST5 automatically copied • Opens ekaani.com'}
+                {isCopied ? `✓ Code ${discountCode} copied to clipboard!` : `Code ${discountCode} automatically copied • Opens ekaani.com`}
               </span>
             </motion.div>
           )}
