@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { BoxState, MysteryPrize, SunsetAtmosphere } from '../types';
 import { soundFx } from '../utils/audio';
+import { saveLead } from '../utils/leads';
 
 const SECOND_SCREEN_VIDEO_URL = 'https://cdn.shopify.com/videos/c/o/v/3736226be57b4ff39e2b51b1e1a28b05.mp4';
 const THIRD_SCREEN_VIDEO_URL = '/video3_fast.mp4';
@@ -63,6 +64,12 @@ export function MysteryBoxScene({
   const screen4EnterTimestamp = useRef<number>(0);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const video3Ref = useRef<HTMLVideoElement>(null);
+  const leadIdRef = useRef<string>('');
+
+  const getLeadId = () => {
+    if (!leadIdRef.current) leadIdRef.current = crypto.randomUUID();
+    return leadIdRef.current;
+  };
 
   // Sunset Atmosphere Progression
   const currentAtmosphere: SunsetAtmosphere = manualAtmosphere ?? (
@@ -161,7 +168,7 @@ export function MysteryBoxScene({
     } catch {}
   };
 
-  const handleEnter = (e?: FormEvent) => {
+  const handleEnter = async (e?: FormEvent) => {
     if (e) e.preventDefault();
     soundFx.playClick();
 
@@ -172,6 +179,12 @@ export function MysteryBoxScene({
     }
 
     setErrorMsg('');
+    try {
+      await saveLead({ id: getLeadId(), name: trimmed });
+    } catch {
+      setErrorMsg('Unable to save. Please try again.');
+      return;
+    }
     setSubmittedName(trimmed);
     setManualAtmosphere(null);
     setBoxState('anticipation');
@@ -191,7 +204,7 @@ export function MysteryBoxScene({
     }, 1100);
   };
 
-  const handleWantMore = (e?: FormEvent) => {
+  const handleWantMore = async (e?: FormEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -210,6 +223,12 @@ export function MysteryBoxScene({
     }
 
     setPhoneErrorMsg('');
+    try {
+      await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
+    } catch {
+      setPhoneErrorMsg('Unable to save. Please try again.');
+      return;
+    }
     setSubmittedPhone(cleaned);
     soundFx.playClick();
     triggerConfetti();
@@ -235,6 +254,7 @@ export function MysteryBoxScene({
     setPrize(null);
     setManualAtmosphere(null);
     setErrorMsg('');
+    leadIdRef.current = '';
   };
 
   const handleCopyCode = () => {
