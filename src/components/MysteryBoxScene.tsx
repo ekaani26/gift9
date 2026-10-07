@@ -226,9 +226,16 @@ export function MysteryBoxScene({
 
     setPhoneErrorMsg('');
     try {
-      await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
-    } catch {
-      setPhoneErrorMsg('Unable to save. Please try again.');
+      const result = await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
+      if (!result.discountCode || !result.discountUrl) throw new Error('Missing discount');
+      setDiscountCode(result.discountCode);
+      setDiscountUrl(result.discountUrl);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'DUPLICATE_PHONE') {
+        setPhoneErrorMsg('This phone number has already been used.');
+      } else {
+        setPhoneErrorMsg('Unable to create your discount. Please try again.');
+      }
       return;
     }
     setSubmittedPhone(cleaned);
@@ -252,6 +259,8 @@ export function MysteryBoxScene({
     setSubmittedName('');
     setPhoneNumber('');
     setSubmittedPhone('');
+    setDiscountCode(FIRST_TIME_BUYER_PRIZE.code);
+    setDiscountUrl('https://ekaani.com/');
     setPhoneErrorMsg('');
     setPrize(null);
     setManualAtmosphere(null);
