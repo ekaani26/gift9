@@ -206,8 +206,8 @@ export function MysteryBoxScene({
       setTimeout(() => {
         setBoxState('revealed');
         setCurrentScreen(3);
-      }, 450);
-    }, 1100);
+      }, 220);
+    }, 180);
   };
 
   const handleWantMore = async (e?: FormEvent) => {
