@@ -53,6 +53,8 @@ export function MysteryBoxScene({
   const [submittedName, setSubmittedName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [submittedPhone, setSubmittedPhone] = useState('');
+  const [discountCode, setDiscountCode] = useState(FIRST_TIME_BUYER_PRIZE.code);
+  const [discountUrl, setDiscountUrl] = useState('https://ekaani.com/');
   const [boxState, setBoxState] = useState<BoxState>('idle');
   const [currentScreen, setCurrentScreen] = useState<2 | 3 | 4>(2);
   const [manualAtmosphere, setManualAtmosphere] = useState<SunsetAtmosphere | null>(null);
