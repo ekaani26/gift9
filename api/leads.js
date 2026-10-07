@@ -5,8 +5,8 @@ function normalizeShopDomain(value) {
 async function getShopifyAccessToken(shop, clientId, clientSecret) {
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+    body: new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
