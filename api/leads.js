@@ -15,7 +15,10 @@ async function getShopifyAccessToken(shop, clientId, clientSecret) {
   });
 
   const data = await response.json();
-  if (!response.ok || !data.access_token) throw new Error('Shopify auth failed');
+  if (!response.ok || !data.access_token) {
+    console.error('Gift10 Shopify auth failed', { status: response.status, error: data?.error, error_description: data?.error_description });
+    throw new Error(`Shopify auth failed (${response.status}): ${data?.error || 'unknown'}`);
+  }
   return data.access_token;
 }
 
@@ -65,6 +68,11 @@ async function createShopifyDiscount({ shop, token, code, name }) {
   const data = await response.json();
   const result = data?.data?.discountCodeBasicCreate;
   if (!response.ok || data?.errors?.length || !result || result.userErrors?.length) {
+    console.error('Gift10 Shopify discount failed', {
+      status: response.status,
+      graphqlErrors: data?.errors?.map((e) => ({ message: e?.message, code: e?.extensions?.code })),
+      userErrors: result?.userErrors,
+    });
     throw new Error(result?.userErrors?.[0]?.message || data?.errors?.[0]?.message || 'Discount creation failed');
   }
 }
@@ -131,6 +139,7 @@ export default async function handler(req, res) {
       discountUrl: `https://www.ekaani.com/discount/${encodeURIComponent(code)}?redirect=%2F`,
     });
   } catch (error) {
+    console.error('Gift10 lead flow failed', { message: String(error?.message || error) });
     return res.status(502).json({ ok: false, error: 'server_error' });
   }
 }
