@@ -63,6 +63,7 @@ export function MysteryBoxScene({
   const [phoneErrorMsg, setPhoneErrorMsg] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [canClickClaim, setCanClickClaim] = useState(false);
+  const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
   const screen4EnterTimestamp = useRef<number>(0);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const video3Ref = useRef<HTMLVideoElement>(null);
@@ -172,6 +173,7 @@ export function MysteryBoxScene({
 
   const handleEnter = async (e?: FormEvent) => {
     if (e) e.preventDefault();
+    if (boxState === 'anticipation' || boxState === 'opening') return;
     soundFx.playClick();
 
     const trimmed = userName.trim();
@@ -181,15 +183,17 @@ export function MysteryBoxScene({
     }
 
     setErrorMsg('');
+    // Give immediate first-click feedback and block duplicate submissions while saving.
+    setBoxState('anticipation');
     try {
       await saveLead({ id: getLeadId(), name: trimmed });
     } catch {
+      setBoxState('idle');
       setErrorMsg('Unable to save. Please try again.');
       return;
     }
     setSubmittedName(trimmed);
     setManualAtmosphere(null);
-    setBoxState('anticipation');
     // Play the requested "zoop" sound effect immediately when clicking open box
     soundFx.playZoop();
 
@@ -211,6 +215,7 @@ export function MysteryBoxScene({
       e.preventDefault();
       e.stopPropagation();
     }
+    if (isSubmittingPhone) return;
     soundFx.unlock();
 
     // Validate phone number to avail discount
@@ -225,6 +230,7 @@ export function MysteryBoxScene({
     }
 
     setPhoneErrorMsg('');
+    setIsSubmittingPhone(true);
     try {
       const result = await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
       if (!result.discountCode || !result.discountUrl) throw new Error('Missing discount');
@@ -236,8 +242,10 @@ export function MysteryBoxScene({
       } else {
         setPhoneErrorMsg('Unable to create your discount. Please try again.');
       }
+      setIsSubmittingPhone(false);
       return;
     }
+    setIsSubmittingPhone(false);
     setSubmittedPhone(cleaned);
     soundFx.playClick();
     triggerConfetti();
@@ -262,6 +270,7 @@ export function MysteryBoxScene({
     setDiscountCode(FIRST_TIME_BUYER_PRIZE.code);
     setDiscountUrl('https://ekaani.com/');
     setPhoneErrorMsg('');
+    setIsSubmittingPhone(false);
     setPrize(null);
     setManualAtmosphere(null);
     setErrorMsg('');
@@ -715,11 +724,21 @@ export function MysteryBoxScene({
                 id="btn-want-more"
                 type="submit"
                 onPointerDown={() => soundFx.unlock()}
-                className="group relative inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-neutral-950 font-extrabold text-xs tracking-wider uppercase border border-amber-300 shadow-[0_4px_20px_rgba(245,158,11,0.55)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.75)] active:scale-[0.97] transition-all duration-300 cursor-pointer"
+                disabled={isSubmittingPhone}
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-neutral-950 font-extrabold text-xs tracking-wider uppercase border border-amber-300 shadow-[0_4px_20px_rgba(245,158,11,0.55)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.75)] active:scale-[0.97] disabled:opacity-60 transition-all duration-300 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
-                <span>Want More</span>
-                <ArrowRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
+                {isSubmittingPhone ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-neutral-950 border-t-transparent rounded-full animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
+                    <span>Want More</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
               </button>
               <span className="text-[10px] sm:text-[11px] text-white font-medium tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,1)] text-center">
                 Enter phone number to avail discount & unlock perks
