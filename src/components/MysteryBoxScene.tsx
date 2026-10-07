@@ -53,6 +53,8 @@ export function MysteryBoxScene({
   const [submittedName, setSubmittedName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [submittedPhone, setSubmittedPhone] = useState('');
+  const [discountCode, setDiscountCode] = useState(FIRST_TIME_BUYER_PRIZE.code);
+  const [discountUrl, setDiscountUrl] = useState('https://ekaani.com/');
   const [boxState, setBoxState] = useState<BoxState>('idle');
   const [currentScreen, setCurrentScreen] = useState<2 | 3 | 4>(2);
   const [manualAtmosphere, setManualAtmosphere] = useState<SunsetAtmosphere | null>(null);
@@ -224,9 +226,16 @@ export function MysteryBoxScene({
 
     setPhoneErrorMsg('');
     try {
-      await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
-    } catch {
-      setPhoneErrorMsg('Unable to save. Please try again.');
+      const result = await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
+      if (!result.discountCode || !result.discountUrl) throw new Error('Missing discount');
+      setDiscountCode(result.discountCode);
+      setDiscountUrl(result.discountUrl);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'DUPLICATE_PHONE') {
+        setPhoneErrorMsg('This phone number has already been used.');
+      } else {
+        setPhoneErrorMsg('Unable to create your discount. Please try again.');
+      }
       return;
     }
     setSubmittedPhone(cleaned);
@@ -250,6 +259,8 @@ export function MysteryBoxScene({
     setSubmittedName('');
     setPhoneNumber('');
     setSubmittedPhone('');
+    setDiscountCode(FIRST_TIME_BUYER_PRIZE.code);
+    setDiscountUrl('https://ekaani.com/');
     setPhoneErrorMsg('');
     setPrize(null);
     setManualAtmosphere(null);
@@ -258,7 +269,7 @@ export function MysteryBoxScene({
   };
 
   const handleCopyCode = () => {
-    const code = prize ? prize.code : FIRST_TIME_BUYER_PRIZE.code;
+    const code = discountCode;
     soundFx.playClick();
     fallbackCopy(code);
     setIsCopied(true);
@@ -277,10 +288,10 @@ export function MysteryBoxScene({
 
     soundFx.unlock();
     soundFx.playClick();
-    const code = prize ? prize.code : FIRST_TIME_BUYER_PRIZE.code;
+    const code = discountCode;
     fallbackCopy(code);
     setIsCopied(true);
-    const destinationUrl = 'https://ekaani.com/';
+    const destinationUrl = discountUrl;
     try {
       const win = window.open(destinationUrl, '_blank');
       if (!win || win.closed || typeof win.closed === 'undefined') {
@@ -572,7 +583,7 @@ export function MysteryBoxScene({
                     <Tag className="w-4 h-4 text-amber-400 shrink-0" />
                     <div className="text-left">
                       <span className="font-mono text-base font-black tracking-widest text-white block leading-none">
-                        {FIRST_TIME_BUYER_PRIZE.code}
+                        {discountCode}
                       </span>
                       <span className="text-[10px] text-amber-400 font-bold tracking-wide">
                         5% OFF + Free Packaging
@@ -738,7 +749,7 @@ export function MysteryBoxScene({
                 <ArrowRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
               </button>
               <span className="text-[10px] sm:text-[11px] text-white font-medium tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,1)] text-center">
-                {isCopied ? '✓ Code FIRST5 copied to clipboard!' : 'Code FIRST5 automatically copied • Opens ekaani.com'}
+                {isCopied ? `✓ Code ${discountCode} copied to clipboard!` : `Code ${discountCode} automatically copied • Opens ekaani.com`}
               </span>
             </motion.div>
           )}
