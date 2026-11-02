@@ -185,6 +185,25 @@ export function MysteryBoxScene({
     setErrorMsg('');
     // Give immediate first-click feedback and block duplicate submissions while saving.
     setBoxState('anticipation');
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check_phone', id: getLeadId(), phone: cleaned }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const result = await response.json();
+      if (result?.error === 'duplicate_phone') {
+        setErrorMsg('This phone number has already been used.');
+        setBoxState('idle');
+        return;
+      }
+      if (!response.ok || result?.ok !== true) throw new Error('Phone verification failed');
+    } catch {
+      setErrorMsg('Unable to verify phone number. Please try again.');
+      setBoxState('idle');
+      return;
+    }
     setSubmittedPhone(cleaned);
     setManualAtmosphere(null);
     // Play the requested "zoop" sound effect immediately when clicking open box
