@@ -176,23 +176,16 @@ export function MysteryBoxScene({
     if (boxState === 'anticipation' || boxState === 'opening') return;
     soundFx.playClick();
 
-    const trimmed = userName.trim();
-    if (!trimmed) {
-      setErrorMsg('Please enter your name');
+    const cleaned = phoneNumber.replace(/[\s\-()+]/g, '');
+    if (!cleaned || !/^\d{10,15}$/.test(cleaned)) {
+      setErrorMsg('Please enter a valid 10-digit phone number');
       return;
     }
 
     setErrorMsg('');
     // Give immediate first-click feedback and block duplicate submissions while saving.
     setBoxState('anticipation');
-    try {
-      await saveLead({ id: getLeadId(), name: trimmed });
-    } catch {
-      setBoxState('idle');
-      setErrorMsg('Unable to save. Please try again.');
-      return;
-    }
-    setSubmittedName(trimmed);
+    setSubmittedPhone(cleaned);
     setManualAtmosphere(null);
     // Play the requested "zoop" sound effect immediately when clicking open box
     soundFx.playZoop();
@@ -218,21 +211,18 @@ export function MysteryBoxScene({
     if (isSubmittingPhone) return;
     soundFx.unlock();
 
-    // Validate phone number to avail discount
-    const cleaned = phoneNumber.replace(/[\s\-()+]/g, '');
-    if (!cleaned) {
-      setPhoneErrorMsg('Please enter your phone number to avail discount');
+    // Phone was validated on the previous screen; collect the name here.
+    const trimmed = userName.trim();
+    if (!trimmed) {
+      setPhoneErrorMsg('Please enter your name');
       return;
     }
-    if (!/^\d{10,15}$/.test(cleaned)) {
-      setPhoneErrorMsg('Please enter a valid 10-digit phone number');
-      return;
-    }
+    const cleaned = submittedPhone;
 
     setPhoneErrorMsg('');
     setIsSubmittingPhone(true);
     try {
-      const result = await saveLead({ id: getLeadId(), name: submittedName || userName.trim(), phone: cleaned });
+      const result = await saveLead({ id: getLeadId(), name: trimmed, phone: cleaned });
       if (!result.discountCode || !result.discountUrl) throw new Error('Missing discount');
       setDiscountCode(result.discountCode);
       setDiscountUrl(result.discountUrl);
@@ -246,7 +236,7 @@ export function MysteryBoxScene({
       return;
     }
     setIsSubmittingPhone(false);
-    setSubmittedPhone(cleaned);
+    setSubmittedName(trimmed);
     soundFx.playClick();
     triggerConfetti();
     screen4EnterTimestamp.current = Date.now();
@@ -642,18 +632,18 @@ export function MysteryBoxScene({
                   <User className="w-3.5 h-3.5" />
                 </div>
                 <input
-                  id="input-user-name"
-                  type="text"
-                  value={userName}
+                  id="input-user-phone"
+                  type="tel"
+                  value={phoneNumber}
                   onChange={(e) => {
-                    setUserName(e.target.value);
+                    setPhoneNumber(e.target.value.replace(/[^\d+\-\s()]/g, ''));
                     if (errorMsg) setErrorMsg('');
                   }}
                   disabled={boxState === 'anticipation' || boxState === 'opening'}
-                  placeholder="Enter your name..."
-                  maxLength={30}
+                  placeholder="Enter your phone number..."
+                  maxLength={16}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/85 border border-white/35 text-white placeholder-neutral-300 text-xs font-medium focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/50 backdrop-blur-md transition-all shadow-[0_4px_20px_rgba(0,0,0,0.85)] disabled:opacity-50"
-                  autoComplete="name"
+                  autoComplete="tel"
                 />
               </div>
 
@@ -699,18 +689,17 @@ export function MysteryBoxScene({
                   <Phone className="w-3.5 h-3.5" />
                 </div>
                 <input
-                  id="input-user-phone"
-                  type="tel"
-                  value={phoneNumber}
+                  id="input-user-name"
+                  type="text"
+                  value={userName}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^\d+\-\s()]/g, '');
-                    setPhoneNumber(val);
+                    setUserName(e.target.value);
                     if (phoneErrorMsg) setPhoneErrorMsg('');
                   }}
-                  placeholder="Enter phone number to avail discount..."
-                  maxLength={16}
+                  placeholder="Enter your name..."
+                  maxLength={30}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/85 border border-white/35 text-white placeholder-neutral-300 text-xs font-medium focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/50 backdrop-blur-md transition-all shadow-[0_4px_20px_rgba(0,0,0,0.85)]"
-                  autoComplete="tel"
+                  autoComplete="name"
                 />
               </div>
 
@@ -741,7 +730,7 @@ export function MysteryBoxScene({
                 )}
               </button>
               <span className="text-[10px] sm:text-[11px] text-white font-medium tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,1)] text-center">
-                Enter phone number to avail discount & unlock perks
+                Enter your name to avail discount & unlock perks
               </span>
             </motion.form>
           )}
