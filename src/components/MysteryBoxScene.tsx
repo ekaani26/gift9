@@ -228,7 +228,11 @@ export function MysteryBoxScene({
       setDiscountUrl(result.discountUrl);
     } catch (error) {
       if (error instanceof Error && error.message === 'DUPLICATE_PHONE') {
-        setPhoneErrorMsg('This phone number has already been used.');
+        // A phone-related error belongs beside the phone input, not the name input.
+        setErrorMsg('This phone number has already been used.');
+        setPhoneErrorMsg('');
+        setBoxState('idle');
+        setCurrentScreen(2);
       } else {
         setPhoneErrorMsg('Unable to create your discount. Please try again.');
       }
