@@ -105,7 +105,7 @@ export default async function handler(req, res) {
     const sheetResponse = await fetch(sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name: checkingPhone ? 'Pending' : name.trim(), phone, secret: sheetSecret }),
+      body: JSON.stringify({ id, name: checkingPhone ? '' : name.trim(), phone, secret: sheetSecret, action: checkingPhone ? 'check_phone' : 'save' }),
       signal: AbortSignal.timeout(20000),
       redirect: 'follow',
     });
