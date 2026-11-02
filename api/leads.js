@@ -87,11 +87,14 @@ export default async function handler(req, res) {
   let data;
   try { data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch { return res.status(400).json({ ok: false }); }
 
-  const { id, name, phone = '' } = data || {};
+  const { id, name, phone = '', action = '' } = data || {};
+  const checkingPhone = action === 'check_phone';
+  if (action !== '' && !checkingPhone) return res.status(400).json({ ok: false });
   if (
     typeof id !== 'string' || !/^[a-f0-9-]{36}$/i.test(id) ||
-    typeof name !== 'string' || !name.trim() || name.length > 30 ||
-    typeof phone !== 'string' || (phone !== '' && !/^\d{10,15}$/.test(phone))
+    (!checkingPhone && (typeof name !== 'string' || !name.trim() || name.length > 30)) ||
+    typeof phone !== 'string' || (phone !== '' && !/^\d{10,15}$/.test(phone)) ||
+    (checkingPhone && !phone)
   ) return res.status(400).json({ ok: false });
 
   const sheetUrl = process.env.GOOGLE_SHEETS_WEB_APP_URL;
@@ -102,7 +105,7 @@ export default async function handler(req, res) {
     const sheetResponse = await fetch(sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name: name.trim(), phone, secret: sheetSecret }),
+      body: JSON.stringify({ id, name: checkingPhone ? 'Pending' : name.trim(), phone, secret: sheetSecret }),
       signal: AbortSignal.timeout(20000),
       redirect: 'follow',
     });
@@ -113,6 +116,7 @@ export default async function handler(req, res) {
     }
     if (!sheetResponse.ok || sheetResult.ok !== true) throw new Error('Sheet write failed');
 
+    if (checkingPhone) return res.status(200).json({ ok: true });
     if (!phone) return res.status(200).json({ ok: true });
 
     const shop = normalizeShopDomain(process.env.SHOPIFY_STORE_DOMAIN);
